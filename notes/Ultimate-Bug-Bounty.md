@@ -1,55 +1,34 @@
-## Domain Recon
+## Advanced Recon
 ---
-1. crt.sh
+### Tomnomnom automated recon 
+----
+(https://www.youtube.com/watch?v=SYExiynPEKM&t)
+
+1. Make a target directory 
+
+2. fetch in scope `widcards` file (no need for www.)
+
+3. `cat wildcards | assetfinder --subs-only | anew domains`
+    - add to path: https://www.digitalocean.com/community/tutorials/how-to-install-go-on-ubuntu-20-04
+    - download go applications: https://medium.com/@sherlock297/go-get-installing-executables-with-go-get-in-module-mode-is-deprecated-de3a30439596
+4. in alternative we can use `findomain -f wildcards | tee -a from-findomain`, where `tee -a` is an alternative to anew
+    - once we have `from-findomain` we can run `cat from-findomain | anew domains` so we can add other domains to scope and eliminate duplicates
+
+5. remove special characters from `domain` file, like "_", "*"
+
+6. `cat domains | httprobe -c 80 --prefer-https | anew hosts`
+
+7.  `cat hosts | fff -d 1 -S -o roots`, this will output a new file will all the root file containing all the headers of the pages
+
+8. `cd roots` and `gf <command>` for information (https://github.com/tomnomnom/gf)
+
+9. `waybackurls '<domain>'` | tee -a waybackurls-domain
     
-    - retrieve organization website SSL certificate from browser `https://www.ssl2buy.com/wiki/how-to-view-ssl-certificate-details-on-chrome-56`   
+    - or `waybackurls --get-versions '<web-page>'`
+    - search for `.js` files
 
-        - in alternative, SSL certificates can be checked in `https://www.sslshopper.com/`
+- Bruteforce 404 and 403 pages
 
-    - paste organization `Trade Name` in `crt.sh` (ex: Under Armour, Inc.)
+10. `ffuf -w /Seclists/Web-Content/raft-large-files.txt -u <domain>/FUZZ`
 
-2. Shodan recon
-
-    - create an account or, multiple accounts in order to retrieve more access (free account has access to only 2 pages)
-    - retrieve `Trade Name`
-    - dork `ssl.'Trade-Name-with-no-punctuation' 200` in order to retrieve live websites with that specific SSL
-    - filter results with `http.title`
-    - open 10-15 (or all) pages and analyze - the main targets are `Login` pages
-    - retrieve webpages's IP addresses
-
-        - other dorks to use: (*apply same filters*)
-        ```
-        - net:<CIDR,CIDR,CIDR>
-        - ssl:"Program Name"
-        - ssl.cert.subject.CN:"domain.com" 200
-        - http.title:"Grafana" 200 (for Grafana 0day vulnerability)
-            - filter for '.org' and search for the particular domain
-        - http.title:"Citrix Gateway" 200 (same procedure as for Grafana)
-        ```
-    *other recon platforms:*
-    ```
-    - whoxy.com
-    - securitytrails.com
-    ```
-    - once we have all the `Login` pages, we can start scanning with BurpSuite and try testing for weak passwords    
-
-3. Gihub recon
-
-    - retrieve `Trade Name` and query Github (`password, pwd, pw, admin, api, token, secret, private`)
-    - retrieve the `domain` and query Github
-    - check for code pushes
-    - static code review
-    - check for Users that pushed the code, and query (even in Google)
-    - filter queryes by adding `NOT this.com`, `language:python`
-    - apply same tactic on `gist.github.com`
- 
-
-
-
-## Static Code Analysis
----
-1. Browser dev tools
-    
-    - F12 on webpage, and look for `.js` files - open and search for sensitive data (api, password, domain, access tokens, etc.)
-
-
+    - in alternative we can use `raft-large-directories.txt`
