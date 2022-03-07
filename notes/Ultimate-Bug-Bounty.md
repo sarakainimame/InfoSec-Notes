@@ -6,7 +6,7 @@
 
 1. Make a target directory 
 
-2. fetch in scope `widcards` file (no need for www.)
+2. Fetch in scope `widcards` file (no need for www.)
 
 3. `cat wildcards | assetfinder --subs-only | anew domains`
     - add to path: https://www.digitalocean.com/community/tutorials/how-to-install-go-on-ubuntu-20-04
@@ -32,3 +32,41 @@
 10. `ffuf -w /Seclists/Web-Content/raft-large-files.txt -u <domain>/FUZZ`
 
     - in alternative we can use `raft-large-directories.txt`
+
+
+### Jhaddix methodology
+-----
+(https://www.youtube.com/watch?v=p4JgIu1mceI&)
+
+1. Scope domains
+
+2. Acquisition
+
+    - `crunchbase.com`, get target information details (founders, acquisitons, Linkedin, etc.) and possibily dill down on old domains related to the target
+
+3. ASN enumeration
+
+    - `bgp.he.net`, helps to acquire both IPv4 and IPv6 addresses
+    
+    - `echo 'target' | metabigor net --org -v`, using metabigor
+
+    - `pyhton asnlookup.py -a <target>`
+
+### Recon-ng
+----
+1. `recon-ng`
+
+2. `marketplace install all`
+
+3. 
+
+
+## Active Scanning
+----
+### Nuclei
+----
+(https://www.youtube.com/watch?v=jbmFYydIWXE&)
+
+1. Grab the file of found domains for Recon
+
+2. Run: `nuclei -l ~/Path/to/hosts -rate-limit 4 -header 'User-Agent: BugBountyHuter' -H 'X-Bug-Bounty: YesWeHack'`
