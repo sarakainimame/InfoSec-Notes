@@ -33,6 +33,8 @@
 
     - in alternative we can use `raft-large-directories.txt`
 
+    - advanced ffuf fuzzing: `ffuf -u https://DOM/FUZZ -w domains.txt: DOM, wordlist.txt: FUZZ -recursion -recursion-depth 3 -s -e .asa,.inc,.config,.bak,.old,.sql,.tar.gz -o results.txt -of csv -se -ac`
+
 
 ### Jhaddix methodology
 -----
@@ -52,13 +54,73 @@
 
     - `pyhton asnlookup.py -a <target>`
 
-### Recon-ng
+
+### LeetDoor methodology
 ----
-1. `recon-ng`
+(https://www.youtube.com/watch?v=U2VUycNCBcE&, https://github.com/blackhatethicalhacking)
 
-2. `marketplace install all`
+1. create scope directory
 
-3. 
+2. gather subdomains passively via `recon-ng`, can use `amass`
+
+3. `cat <subdomains> | httpx -verbose > <urls>`, checking for live subdomains
+
+4. gather IP addresses from `amass`
+
+5. `./isup.sh <ips>`, will probe for valid IP addresses and will dump them to a file `valid-ips.txt`
+
+6. `nmap -iL valid-ips.txt -sSV -A -T4 -O -Pn -v -F -oX <nmap-results.xml>`
+
+    - examen output via Hive preferrably: https://hexway.io/downloads/
+    
+    - examen for expired certificates
+
+    - printers
+
+    - other service vulnerabilities (metasploit, log4j, etc.)
+
+7. `sniper -f <valid-ips.txt> -m massweb -w <workspace-name>`, it's an advanced `nmap` type of tool
+
+8. `osmedeus scan -f vuln-and-dirb -t <list-of-domains.txt>`
+
+    - or, `osmedeus scan -T <list_of_targets.txt>`
+
+    - apply concurrency of 2, `cat <list_of_targets.txt> | osmedeus scan -c 2`
+
+9. `cat <subdomains.txt> | while read line ; do echo "QUIT" | openssl s_client -connect $line:443 2>&1 | grep 'server extension "heartbeat" (id=15)' || echo $line: safe; done`, in order to check for `Heartbleed`
+
+10. `getJS --url <domain.com> --output <results.txt>`, grabbing .js files from domain
+
+    - or, `getJS --input <urls.txt> --output <results.txt>`
+
+11. `takeover -l <sub_domains.txt> -v -t 10` to check for domain takeover
+
+12. `nuclei -l <urls.txt> -t /root/nuclei-templates/technologies/s3-detect.yaml` to check for S3 buckets via `Nuclei`
+
+13. `python3 paramspider.py --domain <doamin.com> --exclude woff,png,svg,php,jpg --output <params.txt>`
+
+14. `eyewitness -f <urls.txt>` for taking screenshots of targets in order to prioritize
+
+15. `cat <params.txt> | gf xss | sed 's/FUZZ/ /g' >> <xss_params_forMeg.txt>`, preparing for fuzzing
+
+16. `amass enum -passive -d <domain.com> -v | httpx -verbose | nuclei -t /root/nuclei-templates/cves/ -o <output.txt>` searching for vulnerabilites via `Nuclei`
+
+17. `amass enum -passive -d <domain.com> -v | httpx -verbose | jaeles scan -s 'cves' -s 'sensitive' -s 'fuzz' -s ‘common' -s 'routines' report -o <output.txt>` using `Jaeles` for CVE scanning
+
+
+### Amass
+----
+(https://www.youtube.com/watch?v=ES6OKjgW36w)
+
+- Wordlists/API keys/DNS resolvers can be added/modified from the .config file
+
+1. `amass enum -d <domain.com> -src -ip | anew subdomains`, will find subdomains using a basic built-in wordlist, and will output to file
+
+2. `amass intel -asn <AS number> -active`, in order to dig deeper for domains based on the ASN
+
+3. `amass intel -whois -d <domain.com>`, even deeper recon via a reverse whois, for free (only top 50 results)
+
+4. `amass enum -df <subdomains-file> -src -ip -brute -wm ?a?a,?d?d?d -awm ?a?a?a` for using `hashcat`  wildcards
 
 
 ## Active Scanning
@@ -70,3 +132,10 @@
 1. Grab the file of found domains for Recon
 
 2. Run: `nuclei -l ~/Path/to/hosts -rate-limit 4 -header 'User-Agent: BugBountyHuter' -H 'X-Bug-Bounty: YesWeHack'`
+
+
+## Attack Techniques
+----
+### CSRF
+---
+- Cross Site Request Forgery - type of attack that uses input fields to forge/repeat/remove/replace a specific type of request to the web server. Normally this is accomplished via a `token` generated from the server. High value targets are `money transfers`, `login pages`, or anything that renders an input unique.
